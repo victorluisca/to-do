@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
+import bcrypt from "bcryptjs";
 
 @Entity()
 export class User {
@@ -19,6 +20,15 @@ export class User {
 
   @Column()
   password!: string;
+
+  async setPassword(password: string): Promise<void> {
+    const saltRounds = 10;
+    this.password = await bcrypt.hash(password, saltRounds);
+  }
+
+  async checkPassword(password: string): Promise<boolean> {
+    return bcrypt.compare(password, this.password);
+  }
 
   @CreateDateColumn()
   createdAt!: Date;

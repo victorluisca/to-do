@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express, { Request, Response } from "express";
 import { AppDataSource } from "./data-source";
-import { userRoutes } from "./routes";
+import { authRouter, userRoutes } from "./routes";
 
 dotenv.config({ quiet: true });
 
@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/users", userRoutes);
+app.use("/", authRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Hello, World!" });
