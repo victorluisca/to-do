@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthService } from "../services/auth.service";
 import jwt from "jsonwebtoken";
+import { AppError } from "../utils/errorHandler";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not set in environment variables");
+  throw new AppError("JWT_SECRET is not set in environment variables", 500);
 }
 
 declare global {
@@ -16,8 +16,6 @@ declare global {
     }
   }
 }
-
-const authService = new AuthService();
 
 export const authenticate = async (
   req: Request,

@@ -1,12 +1,13 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entities/user.entity";
 import jwt from "jsonwebtoken";
+import { AppError } from "../utils/errorHandler";
 
 const userRepository = AppDataSource.getRepository(User);
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not set in environment variables");
+  throw new AppError("JWT_SECRET is not set in environment variables", 500);
 }
 
 export class AuthService {
@@ -15,11 +16,18 @@ export class AuthService {
     email: string,
     password: string
   ): Promise<Partial<User>> {
-    const existingUser = await userRepository.findOne({
-      where: [{ username }, { email }],
+    const userWithEmail = await userRepository.findOne({
+      where: { email },
     });
-    if (existingUser) {
-      throw new Error("Username or email already in use");
+    if (userWithEmail) {
+      throw new AppError("Email already in use", 409);
+    }
+
+    const userWithUsername = await userRepository.findOne({
+      where: { username },
+    });
+    if (userWithUsername) {
+      throw new AppError("Username already in use", 409);
     }
 
     const user = new User();
@@ -40,7 +48,7 @@ export class AuthService {
     const user = await userRepository.findOne({ where: { username } });
 
     if (!user || !(await user.checkPassword(password))) {
-      throw new Error("Invalid username or password");
+      throw new AppError("Invalid username or password", 401);
     }
 
     const payload = {

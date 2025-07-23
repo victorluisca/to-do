@@ -22,42 +22,42 @@ export class UserController {
     this.userService = userService;
   }
 
-  async getAllUsers(req: Request, res: Response): Promise<void> {
+  async getAllUsers(
+    req: Request,
+    res: Response,
+    next: Function
+  ): Promise<void> {
     try {
       const users = await this.userService.getAllUsers();
       res.status(200).json(users);
     } catch (error: any) {
-      console.error("Error fetching all users:", error);
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async getUserById(req: Request, res: Response): Promise<void> {
+  async getUserById(
+    req: Request,
+    res: Response,
+    next: Function
+  ): Promise<void> {
     const parseResult = userIdSchema.safeParse(req.params);
     if (!parseResult.success) {
-      res.status(400).json({ message: "Invalid user ID" });
-      return;
+      return next(parseResult.error);
     }
     const userId = parseResult.data.id;
 
     try {
       const user = await this.userService.getUserById(userId);
       res.status(200).json(user);
-    } catch (error: any) {
-      console.error("Error fetching user:", error);
-      if (error.message === "User not found") {
-        res.status(404).json({ message: error.message });
-        return;
-      }
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async updateUser(req: Request, res: Response): Promise<void> {
+  async updateUser(req: Request, res: Response, next: Function): Promise<void> {
     const idParse = userIdSchema.safeParse(req.params);
     if (!idParse.success) {
-      res.status(400).json({ message: "Invalid user ID" });
-      return;
+      return next(idParse.error);
     }
     if (!req.body || Object.keys(req.body).length === 0) {
       res.status(400).json({ message: "Request body is required" });
@@ -65,8 +65,7 @@ export class UserController {
     }
     const bodyParse = updateUserSchema.safeParse(req.body);
     if (!bodyParse.success) {
-      res.status(400).json({ errors: bodyParse.error });
-      return;
+      return next(bodyParse.error);
     }
 
     const userId = idParse.data.id;
@@ -75,30 +74,23 @@ export class UserController {
     try {
       const updatedUser = await this.userService.updateUser(userId, updateData);
       res.status(200).json(updatedUser);
-    } catch (error: any) {
-      console.error("Error updating user:", error);
-      if (error.message === "User not found") {
-        res.status(404).json({ message: error.message });
-        return;
-      }
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async deleteUser(req: Request, res: Response): Promise<void> {
+  async deleteUser(req: Request, res: Response, next: Function): Promise<void> {
     const parseResult = userIdSchema.safeParse(req.params);
     if (!parseResult.success) {
-      res.status(400).json({ message: "Invalid user ID" });
-      return;
+      return next(parseResult.error);
     }
     const userId = parseResult.data.id;
 
     try {
       await this.userService.deleteUser(userId);
       res.status(204).send();
-    } catch (error: any) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 }

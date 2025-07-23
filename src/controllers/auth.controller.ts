@@ -30,11 +30,14 @@ export class AuthController {
     this.authService = authService;
   }
 
-  async registerUser(req: Request, res: Response): Promise<void> {
+  async registerUser(
+    req: Request,
+    res: Response,
+    next: Function
+  ): Promise<void> {
     const parseResult = registerUserSchema.safeParse(req.body);
     if (!parseResult.success) {
-      res.status(400).json({ errors: parseResult.error });
-      return;
+      return next(parseResult.error);
     }
     const { username, email, password } = parseResult.data;
 
@@ -44,36 +47,25 @@ export class AuthController {
         email,
         password
       );
-
       res.status(201).json(user);
-    } catch (error: any) {
-      if (error.message === "Username or email already in use") {
-        res.status(409).json({ message: error.message });
-        return;
-      }
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async login(req: Request, res: Response): Promise<void> {
+  async login(req: Request, res: Response, next: Function): Promise<void> {
     const parseResult = loginSchema.safeParse(req.body);
     if (!parseResult.success) {
-      res.status(400).json({ errors: parseResult.error });
-      return;
+      return next(parseResult.error);
     }
 
     const { username, password } = parseResult.data;
 
     try {
       const token = await this.authService.login(username, password);
-
-      res.status(200).json({ token: token });
-    } catch (error: any) {
-      if (error.message === "Invalid username or password") {
-        res.status(401).json({ message: error.message });
-        return;
-      }
-      res.status(500).json({ message: error.message });
+      res.status(200).json({ token });
+    } catch (error) {
+      next(error);
     }
   }
 }
