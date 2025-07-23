@@ -1,5 +1,27 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
+import z from "zod";
+
+const registerUserSchema = z
+  .object({
+    username: z.string().min(3),
+    email: z.email(),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters long")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]).*$/,
+        "Password must include at least one uppercase letter, one lowercase letter, one number and one special character"
+      ),
+  })
+  .strict();
+
+const loginSchema = z
+  .object({
+    username: z.string().min(3),
+    password: z.string(),
+  })
+  .strict();
 
 export class AuthController {
   private authService: AuthService;
@@ -9,7 +31,12 @@ export class AuthController {
   }
 
   async registerUser(req: Request, res: Response): Promise<void> {
-    const { username, email, password } = req.body;
+    const parseResult = registerUserSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ errors: parseResult.error });
+      return;
+    }
+    const { username, email, password } = parseResult.data;
 
     try {
       const user = await this.authService.registerUser(
@@ -29,7 +56,13 @@ export class AuthController {
   }
 
   async login(req: Request, res: Response): Promise<void> {
-    const { username, password } = req.body;
+    const parseResult = loginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ errors: parseResult.error });
+      return;
+    }
+
+    const { username, password } = parseResult.data;
 
     try {
       const token = await this.authService.login(username, password);

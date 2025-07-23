@@ -1,9 +1,10 @@
 import dotenv from "dotenv";
+
+dotenv.config({ quiet: true });
+
 import express, { Request, Response } from "express";
 import { AppDataSource } from "./data-source";
 import { authRouter, userRoutes } from "./routes";
-
-dotenv.config({ quiet: true });
 
 const app = express();
 

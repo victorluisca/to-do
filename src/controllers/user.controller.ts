@@ -1,5 +1,19 @@
 import { Request, Response } from "express";
 import { UserService } from "../services/user.service";
+import z from "zod";
+
+const userIdSchema = z
+  .object({
+    id: z.string().regex(/^\d+$/, "User ID must be a number").transform(Number),
+  })
+  .strict();
+
+const updateUserSchema = z
+  .object({
+    username: z.string().min(3).optional(),
+    email: z.email().optional(),
+  })
+  .strict();
 
 export class UserController {
   private userService: UserService;
@@ -19,12 +33,12 @@ export class UserController {
   }
 
   async getUserById(req: Request, res: Response): Promise<void> {
-    const userId = parseInt(req.params.id);
-
-    if (isNaN(userId)) {
+    const parseResult = userIdSchema.safeParse(req.params);
+    if (!parseResult.success) {
       res.status(400).json({ message: "Invalid user ID" });
       return;
     }
+    const userId = parseResult.data.id;
 
     try {
       const user = await this.userService.getUserById(userId);
@@ -40,32 +54,26 @@ export class UserController {
   }
 
   async updateUser(req: Request, res: Response): Promise<void> {
-    const userId = parseInt(req.params.id);
-    const { username, email } = req.body || {};
-
-    if (isNaN(userId)) {
+    const idParse = userIdSchema.safeParse(req.params);
+    if (!idParse.success) {
       res.status(400).json({ message: "Invalid user ID" });
       return;
     }
-
     if (!req.body || Object.keys(req.body).length === 0) {
       res.status(400).json({ message: "Request body is required" });
       return;
     }
+    const bodyParse = updateUserSchema.safeParse(req.body);
+    if (!bodyParse.success) {
+      res.status(400).json({ errors: bodyParse.error });
+      return;
+    }
+
+    const userId = idParse.data.id;
+    const updateData = bodyParse.data;
 
     try {
-      const updateData: { username?: string; email?: string } = {};
-
-      if (username !== undefined) {
-        updateData.username = username;
-      }
-
-      if (email !== undefined) {
-        updateData.email = email;
-      }
-
       const updatedUser = await this.userService.updateUser(userId, updateData);
-
       res.status(200).json(updatedUser);
     } catch (error: any) {
       console.error("Error updating user:", error);
@@ -78,12 +86,12 @@ export class UserController {
   }
 
   async deleteUser(req: Request, res: Response): Promise<void> {
-    const userId = parseInt(req.params.id);
-
-    if (isNaN(userId)) {
+    const parseResult = userIdSchema.safeParse(req.params);
+    if (!parseResult.success) {
       res.status(400).json({ message: "Invalid user ID" });
       return;
     }
+    const userId = parseResult.data.id;
 
     try {
       await this.userService.deleteUser(userId);
