@@ -2,6 +2,7 @@ import { DeepPartial } from "typeorm";
 import { AppDataSource } from "../data-source";
 import { User } from "../entities/user.entity";
 import { AppError } from "../utils/errorHandler";
+import { Request } from "express";
 
 const userRepository = AppDataSource.getRepository(User);
 
@@ -23,8 +24,11 @@ export class UserService {
 
   async updateUser(
     userId: number,
-    userData: DeepPartial<User>
+    userData: DeepPartial<User>,
+    req: Request
   ): Promise<User | null> {
+    if (userId !== req.user.id) throw new AppError("Access denied", 403);
+
     const user = await userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new AppError("User not found", 409);
@@ -59,7 +63,9 @@ export class UserService {
     return userWithoutPassword as User;
   }
 
-  async deleteUser(userId: number): Promise<boolean> {
+  async deleteUser(userId: number, req: Request): Promise<boolean> {
+    if (userId !== req.user.id) throw new AppError("Access denied", 403);
+
     const result = await userRepository.delete(userId);
     return result.affected === 1;
   }

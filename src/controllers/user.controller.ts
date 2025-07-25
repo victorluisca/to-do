@@ -72,7 +72,11 @@ export class UserController {
     const updateData = bodyParse.data;
 
     try {
-      const updatedUser = await this.userService.updateUser(userId, updateData);
+      const updatedUser = await this.userService.updateUser(
+        userId,
+        updateData,
+        req
+      );
       res.status(200).json(updatedUser);
     } catch (error) {
       next(error);
@@ -87,7 +91,7 @@ export class UserController {
     const userId = parseResult.data.id;
 
     try {
-      await this.userService.deleteUser(userId);
+      await this.userService.deleteUser(userId, req);
       res.status(204).send();
     } catch (error) {
       next(error);
