@@ -4,7 +4,7 @@ dotenv.config({ quiet: true });
 
 import express, { Request, Response } from "express";
 import { AppDataSource } from "./data-source";
-import { authRouter, userRoutes } from "./routes";
+import { authRouter, taskRouter, userRoutes } from "./routes";
 import { errorHandler } from "./utils/errorHandler";
 
 const app = express();
@@ -16,6 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/users", userRoutes);
 app.use("/", authRouter);
+app.use("/tasks", taskRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Hello, World!" });

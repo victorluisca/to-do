@@ -2,10 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import bcrypt from "bcryptjs";
+import { Task } from "./task.entity";
 
 @Entity()
 export class User {
@@ -29,6 +31,9 @@ export class User {
   async checkPassword(password: string): Promise<boolean> {
     return bcrypt.compare(password, this.password);
   }
+
+  @OneToMany(() => Task, (task) => task.user, { cascade: true })
+  tasks!: Task[];
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -10,8 +10,8 @@ if (!JWT_SECRET) {
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: number;
+      user: {
+        id?: number;
       };
     }
   }
